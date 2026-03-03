@@ -1,0 +1,11 @@
+numpy~=1.26.0
+pandas~=2.2.0
+scipy~=1.13.0
+statsmodels~=0.14.1
+arch~=6.3.0
+scikit-learn~=1.4.0
+matplotlib~=3.8.0
+seaborn~=0.13.0
+pyyaml~=6.0.1
+python-dotenv~=1.0.1
+alpaca-py~=0.42.0

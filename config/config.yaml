@@ -1,0 +1,78 @@
+# Outline-only configuration file (YAML).
+# This file should not contain secrets. Use `.env` for API keys.
+#
+# Data configuration (Alpaca Market Data API)
+data:
+  provider: alpaca
+  feed: iex              # or sip (depends on your plan)
+  timeframe: 1Day        # examples: 1Min, 5Min, 15Min, 1Hour, 1Day
+  adjustment: raw        # outline: raw / split / dividend / all (confirm in Alpaca docs)
+  start: "2020-01-01"
+  end: "2025-12-31"
+  symbols:
+    - SPY
+    - AAPL
+
+# Preprocessing configuration
+preprocess:
+  return_type: log       # log or arithmetic
+  dropna: true
+  timezone: "America/New_York"
+
+# Feature engineering configuration
+features:
+  lags:
+    - 1
+    - 2
+    - 5
+  rolling_windows:
+    - 10
+    - 20
+    - 50
+
+# Volatility model configuration
+volatility:
+  model: garch
+  garch:
+    p: 1
+    q: 1
+    dist: studentst      # outline: normal / studentst
+    refit_every: 20      # bars
+    train_window: 500    # bars
+
+# Markov/regime configuration
+regimes:
+  method: observable_markov
+  observable_markov:
+    series: realized_vol
+    n_states: 3
+    labeling: quantiles
+
+# Monte Carlo configuration
+monte_carlo:
+  horizon: 5
+  n_paths: 10000
+  seed: 123
+  process: regime_garch  # outline: gbm / garch / regime_garch
+
+# Signal generation configuration
+signals:
+  method: prob_threshold
+  prob_threshold:
+    horizon: 5
+    long_if_prob_up_gt: 0.60
+    short_if_prob_up_lt: 0.40
+
+# Risk/position sizing configuration
+risk:
+  method: vol_target
+  vol_target:
+    target_annual_vol: 0.15
+    max_leverage: 1.0
+
+# Backtest configuration
+backtest:
+  initial_cash: 100000
+  commission_bps: 1.0
+  slippage_bps: 2.0
+  execution: next_bar

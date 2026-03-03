@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+
+# Secrets
+.env
+
+# Data artifacts
+data/raw/
+data/processed/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
