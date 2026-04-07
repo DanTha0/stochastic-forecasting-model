@@ -6,7 +6,7 @@
 data:
   provider: yahoo
   interval: "1d"          # yfinance: 1m, 2m, 5m, 60m, 1h, 1d, 1wk, 1mo
-  start: "2018-01-01"
+  start: "2017-01-01"
   end: null               # null = up to today
   symbols:
     - SPY
