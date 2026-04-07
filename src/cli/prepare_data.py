@@ -1,39 +1,20 @@
 """
-Project entrypoint: fetch → preprocess → save reusable datasets.
+Fetch market data, preprocess it, and save reusable datasets (CSV + optional Parquet).
 
-How to get preprocessed data (run once, then reuse)
-----------------------------------------------------
-From the project root (folder that contains ``run_backtest.py`` and ``config/``)::
+Run via the repo launcher (project root)::
 
-    python run_backtest.py
+    python prepare_data.py
 
-This will:
-1. Read ``config/config.yaml`` (symbols, date range, interval).
-2. Download/cache raw Yahoo data under ``data/raw/`` (Parquet).
-3. Run ``process_data`` on each symbol.
-4. Save the cleaned table for reuse:
-   - ``data/processed/{SYMBOL}_{interval}_clean.csv``  ← use this in notebooks, training, backtests
-   - ``data/processed/{SYMBOL}_{interval}_clean.parquet`` ← optional fast pandas reload
+Or as a module (project root on ``sys.path``)::
 
-Later, load the CSV without fetching or preprocessing::
+    python -m src.cli.prepare_data
 
-    from src.utils.io import load_processed_csv
-    df = load_processed_csv("data/processed/SPY_1d_clean.csv")
+This does **not** run a trading backtest.
 
-Or in a notebook with project root on ``sys.path``::
-
-    from pathlib import Path
-    import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parent))  # if needed
-    from src.utils.io import load_processed_csv
-    df = load_processed_csv("data/processed/SPY_1d_clean.csv")
+Implementation lives here; the file ``prepare_data.py`` at the repository root is only a thin launcher.
 """
 
-import sys
 from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 import yaml
 
@@ -41,14 +22,17 @@ from src.data.fetch_data import download_yahoo_ohlcv, load_raw_parquet
 from src.data.preprocess import process_data, split_data
 from src.utils.io import save_processed_csv, save_processed_parquet
 
+# Repo root: .../project/src/cli/prepare_data.py -> parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 
 def load_config():
     """
-    Load YAML configuration from `config/config.yaml`.
+    Load YAML configuration from ``config/config.yaml`` (relative to repo root).
 
     How to use:
-    - Normally called from `main()`.
-    - You can also import and call directly in notebooks to reuse the same config.
+    - Called from ``main()``.
+    - Import in notebooks: ``from src.cli.prepare_data import load_config``.
     """
     cfg_path = PROJECT_ROOT / "config" / "config.yaml"
     with open(cfg_path, encoding="utf-8") as f:
@@ -62,9 +46,9 @@ def main():
     What it does:
     1) Reads config.
     2) Downloads/caches raw Yahoo data.
-    3) Cleans data via `process_data`.
+    3) Cleans data via ``process_data``.
     4) Splits train/test (for reporting only; full series is saved).
-    5) Saves CSV + Parquet under `data/processed/`.
+    5) Saves CSV + Parquet under ``data/processed/``.
     """
     cfg = load_config()
     data_cfg = cfg.get("data", {})
@@ -82,8 +66,8 @@ def main():
 
     if provider != "yahoo":
         raise SystemExit(
-            f"run_backtest.py currently implements provider='yahoo' only; got {provider!r}. "
-            "Set data.provider to yahoo or extend this script for Traydner history parsing."
+            f"prepare_data pipeline currently implements provider='yahoo' only; got {provider!r}. "
+            "Set data.provider to yahoo or extend this module for Traydner history parsing."
         )
 
     for symbol in symbols:
@@ -104,7 +88,7 @@ def main():
 
         print(f"\n=== {symbol} ===")
         print(f"Raw cache:     {raw_path}")
-        print(f"Processed CSV: {csv_path}   ← load this for training / backtests / forecasting")
+        print(f"Processed CSV: {csv_path}   ← load this for training / later backtests / forecasting")
         print(f"Parquet:       {parquet_path}")
         print(f"Rows (clean):  {len(clean_df)}")
         print(f"Train / test:  {len(train_df)} / {len(test_df)} (split_ratio={split_ratio})")

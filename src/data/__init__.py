@@ -20,7 +20,7 @@ import yaml
 
 
 def load_yaml():
-    """Load ``config/config.yaml`` into a nested dict (same idea as ``run_backtest.load_config``)."""
+    """Load ``config/config.yaml`` into a nested dict (same idea as ``src.cli.prepare_data.load_config``)."""
     with open(PROJECT_ROOT / "config" / "config.yaml", encoding="utf-8") as f:
         return yaml.safe_load(f)
 

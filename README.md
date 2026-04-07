@@ -58,10 +58,16 @@ Shared I/O helpers live in **`src/utils/io.py`**: **`save_processed_csv`**, **`l
 
 ### How to get data (recommended)
 
-From the **project root** (the folder that contains `run_backtest.py` and `config/`):
+From the **project root** (the folder that contains `prepare_data.py` and `config/`):
 
 ```bash
-python run_backtest.py
+python prepare_data.py
+```
+
+The implementation lives in **`src/cli/prepare_data.py`**; the root `prepare_data.py` is a thin launcher. You can also run:
+
+```bash
+python -m src.cli.prepare_data
 ```
 
 This script:
@@ -83,7 +89,7 @@ This script:
 python -m src.data
 ```
 
-Runs **`create_data()`**: uses the **first** symbol in `config/config.yaml`, fetches and preprocesses, prints head and train/test sizes. It does **not** mirror the full multi-symbol CSV export in `run_backtest.py`; use `run_backtest.py` for saved artifacts.
+Runs **`create_data()`**: uses the **first** symbol in `config/config.yaml`, fetches and preprocesses, prints head and train/test sizes. It does **not** mirror the full multi-symbol CSV export in `prepare_data.py`; use `prepare_data.py` for saved artifacts.
 
 ---
 
@@ -95,7 +101,7 @@ Relevant keys for the data stage:
 - **`data.symbols`** — list of tickers, e.g. `[SPY, AAPL]`.
 - **`data.start`**, **`data.end`** — date strings; `end: null` means through the latest available bar.
 - **`data.interval`** — yfinance interval, e.g. `1d`, `1h`.
-- **`preprocess.train_frac`** — fraction of rows used as the **train** portion in `run_backtest.py` when reporting train/test sizes (default `0.8` in code if omitted).
+- **`preprocess.train_frac`** — fraction of rows used as the **train** portion in `prepare_data.py` when reporting train/test sizes (default `0.8` in code if omitted).
 
 Other keys under `preprocess`, `features`, etc. are reserved for future or extended pipelines; the current **`process_data`** implementation uses fixed steps inside `preprocess.py` (not every YAML key is wired in yet).
 
@@ -164,7 +170,8 @@ Run scripts from the project root, or add the root to `sys.path` so `import src.
 - `src/models/` — ML and ensembles (in progress).
 - `src/signals/` — Signal rules and position sizing (in progress).
 - `src/backtest/` — Backtest engine and metrics (in progress).
-- `run_backtest.py` — **Data pipeline entrypoint** (fetch → preprocess → save CSV/Parquet).
+- `prepare_data.py` (repo root) — **Launcher** that calls `src.cli.prepare_data.main()`.
+- `src/cli/prepare_data.py` — **Data pipeline** (fetch → preprocess → save CSV/Parquet). A dedicated backtest entrypoint will be added separately.
 
 ---
 
