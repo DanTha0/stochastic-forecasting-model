@@ -164,14 +164,46 @@ Run scripts from the project root, or add the root to `sys.path` so `import src.
 
 ---
 
-## Broader project layout
+## Features engineering (`src/features`)
 
-- `src/features/` — Stochastic / time-series features (Markov, GARCH, Monte Carlo, etc.; in progress).
-- `src/models/` — ML and ensembles (in progress).
-- `src/signals/` — Signal rules and position sizing (in progress).
-- `src/backtest/` — Backtest engine and metrics (in progress).
-- `prepare_data.py` (repo root) — **Launcher** that calls `src.cli.prepare_data.main()`.
-- `src/cli/prepare_data.py` — **Data pipeline** (fetch → preprocess → save CSV/Parquet). A dedicated backtest entrypoint will be added separately.
+This section describes feature extraction and stochastic modeling for forecasting and signals.
+
+### Overview
+
+Features are built from processed data (from `src/data`) to create inputs for models and signals. Includes time-series features, volatility models, and stochastic processes.
+
+### Files in `src/features/`
+
+| File | Purpose |
+|------|---------|
+| `time_series_features.py` | Lag features, rolling statistics, technical indicators (SMA, EMA, RSI, MACD, Bollinger bands). |
+| `volatility_models.py` | Realized volatility estimators, GARCH models (GARCH(1,1), EGARCH), forecasting modes. |
+| `garch_volatility.py` | Script to fit GARCH model and forecast next-day volatility from processed data. |
+| `markov_chains.py` | Markov chain models for regime detection. |
+| `monte_carlo.py` | Monte Carlo simulations for path generation. |
+| `stochastic_processes.py` | General stochastic process implementations. |
+| `get_indicators.py` | Technical indicators (RSI, MACD) using pandas-ta. |
+
+### Running volatility forecast
+
+From the project root:
+
+```bash
+python src/features/garch_volatility.py
+```
+
+This loads processed data, fits a GARCH(1,1) model, and prints the next-day annualized volatility forecast and model parameters.
+
+### Importing features
+
+```python
+from src.features.garch_volatility import forecast_garch_volatility
+from src.features.get_indicators import add_indicators
+```
+
+Ensure the project root is in `sys.path` or run from root.
+
+---
 
 ---
 

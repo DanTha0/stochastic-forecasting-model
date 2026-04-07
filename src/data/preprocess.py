@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from toolz import pipe
-from features.get_indicators import add_indicators
+from ..features.get_indicators import add_indicators
 
 # --- 1. Pure Transformation Functions ---
 
@@ -37,7 +37,7 @@ def add_volatility(df, window=21):
     vol = df["returns"].rolling(window).std() * np.sqrt(252) # Annualize assuming 252 trading days
     return df.assign(volatility=vol)
 
-def add_indicators(df):
+def add_day_ahead_indicators(df):
     """Adds day-ahead indicators."""
     return add_indicators(df)
 
@@ -61,10 +61,11 @@ def process_data(raw_df):
         add_returns,
         winsorize,
         add_volatility,
+        add_day_ahead_indicators,
         lambda x: x.dropna()  # Final cleanup of rolling/shift NaNs
     )
 
-# --- 3. ML Helper Functions ---
+# --- 3.Data Allocation Functions ---
 
 def split_data(df, ratio=0.8):
     """Splits data chronologically at a fixed point."""
