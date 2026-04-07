@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from toolz import pipe
+from features.get_indicators import add_indicators
 
 # --- 1. Pure Transformation Functions ---
 
@@ -35,6 +36,10 @@ def add_volatility(df, window=21):
     """Adds annualized rolling realized volatility."""
     vol = df["returns"].rolling(window).std() * np.sqrt(252) # Annualize assuming 252 trading days
     return df.assign(volatility=vol)
+
+def add_indicators(df):
+    """Adds day-ahead indicators."""
+    return add_indicators(df)
 
 def winsorize(df, q=0.001):
     """Clips extreme outliers at the given quantiles."""
