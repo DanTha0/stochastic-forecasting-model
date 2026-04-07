@@ -1,46 +1,71 @@
-"""
-Outline-only module for preprocessing raw Alpaca data into research-ready time series.
+import numpy as np
+import pandas as pd
+from toolz import pipe
 
-DO NOT IMPLEMENT YET (per project requirement: "do not code anything").
+# --- 1. Pure Transformation Functions ---
 
-Inputs:
-- Raw bar data from `data/raw/` produced by `src/data/fetch_data.py`
+def normalize_columns(df):
+    """Returns a new DF with lowercase, snake_case headers."""
+    new_cols = [str(c).strip().lower().replace(" ", "_") for c in df.columns]
+    return df.rename(columns=dict(zip(df.columns, new_cols)))
 
-Outputs:
-- Processed datasets under `data/processed/`:
-  - canonical OHLCV table
-  - returns table
-  - volatility features table (basic proxies)
-  - optional aligned multi-asset panel
+def fix_index(df):
+    """Ensures a sorted, unique DatetimeIndex."""
+    return (df.assign(temp_idx=pd.to_datetime(df.index))
+            .set_index("temp_idx")
+            .sort_index()
+            .loc[~df.index.duplicated(keep="last")]
+            .rename_axis("timestamp"))
 
-Core transformations to implement:
+def filter_invalid_bars(df):
+    """Removes rows violating physical price constraints."""
+    mask = (df["high"] >= df["low"]) & (df["low"] > 0) & (df["close"] > 0)
+    return df.loc[mask]
 
-- Normalize schema
-  - standardize column names: open/high/low/close/volume/vwap/trade_count
-  - ensure timestamp index is timezone-aware and consistent
-  - sort by time, drop duplicates
+def add_returns(df, log=True):
+    """Calculates returns based on adjusted close or close."""
+    target = "adj_close" if "adj_close" in df.columns else "close"
+    if log:
+        ret = np.log(df[target] / df[target].shift(1))
+    else:
+        ret = df[target].pct_change()
+    return df.assign(returns=ret)
 
-- Returns
-  - log returns: r_t = log(C_t / C_{t-1})
-  - arithmetic returns: (C_t / C_{t-1}) - 1
-  - decide which return type is used by each downstream model
+def add_volatility(df, window=21):
+    """Adds annualized rolling realized volatility."""
+    vol = df["returns"].rolling(window).std() * np.sqrt(252) # Annualize assuming 252 trading days
+    return df.assign(volatility=vol)
 
-- Realized volatility proxies (examples for daily; adjust for intraday)
-  - rolling window std of returns
-  - OHLC estimators (Parkinson, Garman–Klass, Rogers–Satchell)
-  - optional microstructure handling for intraday (outliers, gaps)
+def winsorize(df, q=0.001):
+    """Clips extreme outliers at the given quantiles."""
+    lower, upper = df["returns"].quantile([q, 1-q])
+    return df.assign(returns=df["returns"].clip(lower, upper))
 
-- Resampling
-  - resample intraday to daily/weekly when needed
-  - decide fill policy (generally avoid forward-fill for prices)
+# --- 2. The Functional Pipeline ---
 
-- Split logic
-  - time-based train/val/test split
-  - walk-forward windows for refitting (store window definitions)
+def process_data(raw_df):
+    """
+    The pipeline: Data flows through these functions like an assembly line.
+    Each function takes a DataFrame and returns a new DataFrame.
+    """
+    return pipe(
+        raw_df,
+        normalize_columns,
+        fix_index,
+        filter_invalid_bars,
+        add_returns,
+        winsorize,
+        add_volatility,
+        lambda x: x.dropna()  # Final cleanup of rolling/shift NaNs
+    )
 
-Quality checks to add:
-  - missing bars, holiday gaps, early closes
-  - abnormal returns/outliers
-  - symbol changes/corporate actions policy (splits/dividends)
-"""
+# --- 3. ML Helper Functions ---
 
+def split_data(df, ratio=0.8):
+    """Splits data chronologically at a fixed point."""
+    split_point = int(len(df) * ratio)
+    return df.iloc[:split_point], df.iloc[split_point:]
+
+# --- Execution Example ---
+# cleaned_data = process_data(yahoo_df)
+# train, test = split_data(cleaned_data)

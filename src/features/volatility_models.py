@@ -27,9 +27,9 @@ Planned pieces:
 
 Interfaces to define:
 
-- `fit_garch(returns, model_spec, distribution, ...) -> fitted_model`
-- `forecast_vol(fitted_model, horizon, ...) -> series/dataframe`
-- `rolling_garch_forecast(returns, window, refit_every, ...) -> vol_forecasts`
+- `fit_garch(returns, model_spec, distribution, ...)` returns a fitted model
+- `forecast_vol(fitted_model, horizon, ...)` returns series or dataframe
+- `rolling_garch_forecast(returns, window, refit_every, ...)` returns vol forecasts
 
 Validation diagnostics to add:
 - standardized residuals: should be closer to i.i.d.

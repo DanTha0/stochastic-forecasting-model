@@ -18,7 +18,7 @@ Data protocol:
 
 Validation protocol:
 - Strict time-series splits
-  - expanding window train -> validate -> test
+  - expanding window train, then validate, then test
   - or walk-forward with periodic refits
 - Avoid leakage:
   - scaling and feature selection must be fit on train only

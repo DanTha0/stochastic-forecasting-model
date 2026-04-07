@@ -1,23 +1,36 @@
 # Outline-only configuration file (YAML).
 # This file should not contain secrets. Use `.env` for API keys.
 #
-# Data configuration (Alpaca Market Data API)
+# Primary research data: Yahoo Finance via yfinance (no API key; good historical OHLCV).
+# Traydner remains available in fetch_data.TraydnerAPI for prices / simulated trading.
 data:
-  provider: alpaca
-  feed: iex              # or sip (depends on your plan)
-  timeframe: 1Day        # examples: 1Min, 5Min, 15Min, 1Hour, 1Day
-  adjustment: raw        # outline: raw / split / dividend / all (confirm in Alpaca docs)
-  start: "2020-01-01"
-  end: "2025-12-31"
+  provider: yahoo
+  interval: "1d"          # yfinance: 1m, 2m, 5m, 60m, 1h, 1d, 1wk, 1mo
+  start: "2018-01-01"
+  end: null               # null = up to today
   symbols:
     - SPY
     - AAPL
+  # Traydner (optional; used when provider: traydner)
+  resolution: "1d"
+  history_limit: 5000
 
 # Preprocessing configuration
 preprocess:
-  return_type: log       # log or arithmetic
+  return_type: log        # log or arithmetic (for primary return column)
+  price_for_returns: adj_close  # adj_close | close — adj_close recommended for equities
   dropna: true
-  timezone: "America/New_York"
+  timezone: "America/New_York"  # localize daily bars for consistency (Yahoo is date-only UTC)
+  drop_invalid_bars: true       # rows where OHLC relationships break
+  drop_zero_volume: false       # if true, drop rows with volume == 0
+  winsorize_returns: false    # if true, clip return quantiles (reduces single-day glitch impact)
+  winsorize_quantiles: [0.001, 0.999]
+  vol_windows: [5, 10, 21]      # rolling std windows (in bars) on returns
+  ohlc_vol_window: 20          # window for Parkinson / Garman-Klass / Rogers-Satchell
+  annualization: 252            # trading days per year for scaling volatility
+  train_frac: 0.70
+  val_frac: 0.15
+  # remainder goes to test; set val_frac: 0 for train/test only
 
 # Feature engineering configuration
 features:
