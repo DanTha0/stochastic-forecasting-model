@@ -49,6 +49,7 @@ This section describes how market data is fetched, cleaned, stored, and reused.
 |------|---------|
 | `fetch_data.py` | **`PROJECT_ROOT`**, **`download_yahoo_ohlcv`**, **`load_raw_parquet`**: download/cache Yahoo OHLCV (+ Adj Close) as Parquet under `data/raw/`. Also **`TraydnerAPI`** for optional live/simulated endpoints. |
 | `preprocess.py` | **`process_data`**: normalize columns → fix datetime index → drop invalid bars → log returns (`returns`) → winsorize → rolling annualized **`volatility`** → drop NaNs. **`split_data`**: chronological train/test split by row fraction. Uses **`toolz.pipe`** to chain steps. |
+| `ml_data_process.py` | Rolling, walk-forward GARCH forecast builder for ML feature pipelines. Fits a sliding-window GARCH model and stores `garch_vol_forecast`; uses **`tqdm`** for progress tracking. |
 | `__init__.py` | **`load_yaml()`**, **`build_clean_dataframe()`**, **`create_data()`** (small demo using first symbol from config). |
 | `__main__.py` | Allows **`python -m src.data`** to run **`create_data()`**. |
 
@@ -90,6 +91,16 @@ python -m src.data
 ```
 
 Runs **`create_data()`**: uses the **first** symbol in `config/config.yaml`, fetches and preprocesses, prints head and train/test sizes. It does **not** mirror the full multi-symbol CSV export in `prepare_data.py`; use `prepare_data.py` for saved artifacts.
+
+---
+
+### Rolling ML feature generation
+
+The new `src/data/ml_data_process.py` module supports a walk-forward GARCH forecast over a historical dataset.
+
+- Use it to build a standalone `garch_vol_forecast` feature for model training or strategy signals.
+- The routine is computationally expensive and intended for one-time dataset preparation, not for every live prediction step.
+- Requires `tqdm` for the progress bar, which is now included in `requirements.txt`.
 
 ---
 
