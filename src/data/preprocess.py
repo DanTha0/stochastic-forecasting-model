@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from toolz import pipe
 from ..features.get_indicators import add_indicators
+from ml_data_process import build_garch_history
 
 # --- 1. Pure Transformation Functions ---
 
@@ -62,6 +63,7 @@ def process_data(raw_df):
         winsorize,
         add_volatility,
         add_day_ahead_indicators,
+        build_garch_history,
         lambda x: x.dropna()  # Final cleanup of rolling/shift NaNs
     )
 

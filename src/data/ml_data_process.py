@@ -21,7 +21,7 @@ def build_garch_history(df, p=1, q=1, window_size=500, warmup=252):
     garch_history = []
 
     for i in range(warmup, len(df)):
-        # 1. Slice the dataframe up to 'i' (simulating "today")
+        # Slice the dataframe up to 'i' (simulating "today")
         historical_slice = df.iloc[:i]
         
         vol_forecast, params = forecast_garch_volatility(historical_slice)
