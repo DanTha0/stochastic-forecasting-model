@@ -14,3 +14,4 @@ pyarrow~=15.0.0
 toolz~=1.0.0
 tqdm~=4.65.0
 pandas-ta~=0.3.14b
+hmmlearn~=0.2.7
