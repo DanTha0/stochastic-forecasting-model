@@ -1,10 +1,32 @@
 import numpy as np
+from hmmlearn import hmm
 import pandas as pd
 from toolz import pipe
 from ..features.get_indicators import add_indicators
-from ml_data_process import build_garch_history
+from .ml_data_process import build_garch_history
 
 # --- 1. Pure Transformation Functions ---
+
+def add_hmm_regimes(df, n_states=3):
+    """Fits an Hidden Markov Model to returns and GARCH forecasts, assigns regimes."""
+    subset = df[['returns', 'garch_vol_forecast']].dropna()
+    data = subset.values
+
+    model = hmm.GaussianHMM(n_components=n_states, covariance_type="full", n_iter=1000)
+    model.fit(data)
+
+    state_means = model.means_[:, 0] 
+    idx = np.argsort(state_means)
+
+    model.means_ = model.means_[idx]
+    model.covars_ = model.covars_[idx]
+    model.startprob_ = model.startprob_[idx]
+    model.transmat_ = model.transmat_[idx, :][:, idx]
+
+    states = model.predict(data)
+    regime_series = pd.Series(states, index=subset.index, name="hmm_regimes")
+        
+    return df.assign(hmm_regimes=regime_series)
 
 def normalize_columns(df):
     """Returns a new DF with lowercase, snake_case headers."""
@@ -64,7 +86,8 @@ def process_data(raw_df):
         add_volatility,
         add_day_ahead_indicators,
         build_garch_history,
-        lambda x: x.dropna()  # Final cleanup of rolling/shift NaNs
+        add_hmm_regimes,
+        lambda df: df.dropna()  # Final cleanup to remove rows with NaNs from indicators
     )
 
 # --- 3.Data Allocation Functions ---

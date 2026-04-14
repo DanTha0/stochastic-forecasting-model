@@ -5,6 +5,15 @@ import pandas_ta as ta
 import pandas as pd
 
 def add_indicators(df):
+    """
+    Add technical indicators to the dataframe: RSI and MACD.
+    
+    Args:
+        df: DataFrame with OHLCV data including 'close' column
+        
+    Returns:
+        DataFrame with added 'RSI', 'MACD_*' columns
+    """
     # RSI (14 day)
     df["RSI"] = ta.rsi(df["close"], length=14)
     

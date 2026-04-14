@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from arch import arch_model
 import tqdm
-from src.features.garch_volatility import forecast_garch_volatility
+from ..features.garch_volatility import forecast_garch_volatility
 
 def build_garch_history(df, p=1, q=1, window_size=500, warmup=252):
     """

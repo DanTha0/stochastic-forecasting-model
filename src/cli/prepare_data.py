@@ -18,9 +18,9 @@ from pathlib import Path
 
 import yaml
 
-from src.data.fetch_data import download_yahoo_ohlcv, load_raw_parquet
-from src.data.preprocess import process_data, split_data
-from src.utils.io import save_processed_csv, save_processed_parquet
+from ..data.fetch_data import download_yahoo_ohlcv, load_raw_parquet
+from ..data.preprocess import process_data, split_data
+from ..utils.io import save_processed_csv, save_processed_parquet
 
 # Repo root: .../project/src/cli/prepare_data.py -> parents[2]
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
