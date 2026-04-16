@@ -25,8 +25,63 @@ def add_hmm_regimes(df, n_states=3):
 
     states = model.predict(data)
     regime_series = pd.Series(states, index=subset.index, name="hmm_regimes")
+
+    state_probs = model.predict_proba(data)
+
+    df_probs = pd.DataFrame(state_probs, columns=['prob_bear', 'prob_chop', 'prob_bull'], index=subset.index)
+    df = pd.concat([df, df_probs], axis=1)
         
     return df.assign(hmm_regimes=regime_series)
+
+import numpy as np
+import pandas as pd
+
+def add_triple_barrier_labels(df, days=5, pt_mult=2, sl_mult=1):
+    """
+    Adds target_label to the dataframe.
+    1  : Profit Target Hit
+    0  : Time Limit Hit (Vertical Barrier)
+    -1 : Stop Loss Hit
+    """
+    # 1. Use the returns you already calculated to find daily volatility
+    # We use a 20-day rolling standard deviation
+    vol = df['returns'].rolling(window=20).std()
+    
+    # 2. Define the barriers
+    # Profit target and Stop loss are multiples of the current volatility
+    df['upper_barrier'] = df['close'] * (1 + (vol * pt_mult))
+    df['lower_barrier'] = df['close'] * (1 - (vol * sl_mult))
+    
+    labels = []
+    
+    # 3. Labeling Loop
+    # We look ahead 'days' to see which barrier is crossed first
+    prices = df['close'].values
+    upper = df['upper_barrier'].values
+    lower = df['lower_barrier'].values
+    
+    for i in range(len(prices) - days):
+        # Look at the window of future prices
+        future_window = prices[i+1 : i+1+days]
+        
+        # Check for touches
+        hits_upper = np.where(future_window >= upper[i])[0]
+        hits_lower = np.where(future_window <= lower[i])[0]
+        
+        first_upper = hits_upper[0] if len(hits_upper) > 0 else 1000
+        first_lower = hits_lower[0] if len(hits_lower) > 0 else 1000
+        
+        if first_upper < first_lower and first_upper < days:
+            labels.append(1)  # Profit
+        elif first_lower < first_upper and first_lower < days:
+            labels.append(-1) # Loss
+        else:
+            labels.append(0)  # Time out (Vertical Barrier)
+
+    # Pad the end with NaNs because we can't look forward at the very end
+    labels += [np.nan] * days
+    df['target_label'] = labels
+    return df
 
 def normalize_columns(df):
     """Returns a new DF with lowercase, snake_case headers."""
@@ -87,6 +142,7 @@ def process_data(raw_df):
         add_day_ahead_indicators,
         build_garch_history,
         add_hmm_regimes,
+        add_triple_barrier_labels,
         lambda df: df.dropna()  # Final cleanup to remove rows with NaNs from indicators
     )
 
@@ -96,7 +152,7 @@ def split_data(df, ratio=0.8):
     """Splits data chronologically at a fixed point."""
     split_point = int(len(df) * ratio)
     return df.iloc[:split_point], df.iloc[split_point:]
-
+    
 # --- Execution Example ---
 # cleaned_data = process_data(yahoo_df)
 # train, test = split_data(cleaned_data)

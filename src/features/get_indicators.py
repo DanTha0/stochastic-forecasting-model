@@ -23,4 +23,8 @@ def add_indicators(df):
     # This returns a DataFrame with MACD, Signal, and Hist columns
     df = pd.concat([df, macd], axis=1)
     
+    df['MACD_norm'] = df['MACD_12_26_9'] / df['close']
+    df['MACDh_norm'] = df['MACDh_12_26_9'] / df['close']
+    df['MACDs_norm'] = df['MACDs_12_26_9'] / df['close']
+    
     return df
