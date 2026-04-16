@@ -216,6 +216,112 @@ Ensure the project root is in `sys.path` or run from root.
 
 ---
 
+## XGBoost Model (`src/models`)
+
+This section describes the machine learning model for market direction prediction.
+
+### Overview
+
+The XGBoost model is a gradient boosting classifier that predicts next-day market movements using engineered features from processed data.
+
+**Purpose:** Classify market direction into three classes:
+- **Bearish (-1)**: Expected downward movement
+- **Neutral (0)**: Expected sideways movement  
+- **Bullish (1)**: Expected upward movement
+
+Classes are mapped to 0, 1, 2 for XGBoost compatibility.
+
+**Features used:**
+- **RSI**: Relative Strength Index (momentum oscillator)
+- **MACD variants**: MACD line, signal line, and histogram (normalized)
+- **GARCH volatility forecast**: Next-day volatility prediction from GARCH(1,1) model
+- **HMM regimes**: Hidden Markov Model market regime classifications
+- **Market probabilities**: Probabilities for bull, bear, and chop (sideways) market states
+- **Returns**: Log returns from previous periods
+
+**Model architecture:**
+- **Algorithm**: XGBoost Classifier with multi-class softmax objective
+- **Cross-validation**: Time series split (5 folds) to respect temporal order
+- **Hyperparameters**: 
+  - max_depth: 6
+  - learning_rate: 0.05
+  - n_estimators: 200
+  - subsample: 0.8
+  - colsample_bytree: 0.8
+  - eval_metric: mlogloss
+  - random_state: 42
+
+### Running the XGBoost Model
+
+From the **project root**:
+
+```bash
+python -m src.models.xgboost
+```
+
+**What it does:**
+1. Loads processed SPY data from `data/processed/SPY_1d_clean.parquet`
+2. Selects the specified features and target labels
+3. Performs 5-fold time series cross-validation
+4. Trains XGBoost model on each fold
+5. Prints detailed classification reports for each fold
+6. Saves the final trained model as `XGBOOST1.pkl` in the project root
+
+**Prerequisites:**
+- Processed data must exist (run `python prepare_data.py` first to generate `data/processed/SPY_1d_clean.parquet`)
+- All required features must be present in the dataset (ensure feature engineering is complete)
+- Dependencies installed: `pip install -r requirements.txt` (includes XGBoost, scikit-learn, joblib)
+
+**Sample output:**
+```
+--- Results for Fold ending 2023-12-31 ---
+              precision    recall  f1-score   support
+
+           0       0.45      0.32      0.37        38
+           1       0.58      0.74      0.65        57
+           2       0.33      0.25      0.29        16
+
+    accuracy                           0.52       111
+   macro avg       0.45      0.44      0.44       111
+weighted avg       0.49      0.52      0.49       111
+```
+
+### Customizing the Model
+
+To modify the model:
+
+1. **Change features**: Edit the `features` list in `src/models/xgboost.py`
+2. **Adjust hyperparameters**: Modify the `params` dictionary
+3. **Use different data**: Change the path in the `RunXGBoostModel()` call (e.g., for AAPL: `"data/processed/AAPL_1d_clean.parquet"`)
+4. **Add feature engineering**: Ensure new features are added to the processed data pipeline
+
+**Example customization:**
+
+```python
+# In src/models/xgboost.py
+features = ['RSI', 'MACD_norm', 'garch_vol_forecast', 'returns']  # Simplified feature set
+
+params = {
+    'objective': 'multi:softmax',
+    'num_class': 3,
+    'max_depth': 4,  # Shallower trees
+    'learning_rate': 0.1,  # Higher learning rate
+    'n_estimators': 100,  # Fewer estimators
+    # ... other params
+}
+```
+
+### Model Persistence
+
+The trained model is saved as `XGBOOST1.pkl` using joblib. To load and use for predictions:
+
+```python
+import joblib
+
+model = joblib.load('XGBOOST1.pkl')
+predictions = model.predict(X_new_data)  # 0, 1, 2 for bearish, neutral, bullish
+```
+
 ---
 
 ## Roadmap
