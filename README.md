@@ -1,6 +1,6 @@
 # Stochastic Forecasting Model
 
-Quantitative research sandbox for equities: historical data, preprocessing, and (in progress) stochastic models (Markov chains, GARCH, Monte Carlo), ML, signals, and backtesting.
+Quantitative research sandbox for equities: historical data, preprocessing, GARCH, and stochastic models (in progress) (Markov chains, Ornstein-Uhlenbeck, Monte Carlo), ML, signals, and backtesting (in progress).
 
 ---
 
