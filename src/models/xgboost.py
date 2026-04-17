@@ -7,7 +7,6 @@ import joblib
 def RunXGBoostModel(path):
     df = load_raw_parquet(path)
     features = ['RSI', 'MACD_norm', 'MACDh_norm', 'MACDs_norm', 'garch_vol_forecast', 'hmm_regimes', 'prob_bull', 'prob_bear', 'prob_chop', 'returns']
-
     data_clean = df[features + ['target_label']].dropna()
     X = data_clean[features]
     y = data_clean['target_label']
@@ -46,11 +45,11 @@ def RunXGBoostModel(path):
         print(classification_report(y_test_mapped, preds))
 
         # Save the final model
-        """
+        
         final_model = xgb.XGBClassifier(**params)
         final_model.fit(X, y + 1)
 
         joblib.dump(final_model, "XGBOOST1.pkl")
-        """
+        
 
 RunXGBoostModel("data/processed/SPY_1d_clean.parquet")
